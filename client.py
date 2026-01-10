@@ -22,7 +22,7 @@ ADDR = (SERVER,PORT)
 #     print(response)
 
 '''
-CLIENT IS A WIP THIS IS WHATS CAUSING ALL THE BUGS WITH DISCONNECTS
+CLIENT IS A WIP THIS IS WHATS CAUSING ALL THE BUGS WITH DISCONNECTS DUE TO THREADING WILL FIX
 '''
 
 
@@ -80,7 +80,7 @@ while True:
     
 
 receive_thread = threading.Thread(target=receive,args=(client,))
-send_thread = threading.Thread(target=send2)
+send_thread = threading.Thread(target=send2,args=(client,))
 
 receive_thread.start()
 send_thread.start()
