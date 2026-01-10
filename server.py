@@ -36,6 +36,9 @@ clients = {}
 
 
 def broadcast(message,conn):
+    '''
+    broadcasts a message received from a client to all other connecting clients
+    '''
     for client in clients.copy():
         if clients[client] != conn:
             try:
@@ -45,6 +48,9 @@ def broadcast(message,conn):
                 del clients[client]
 
 def handleClientChat(conn,addr,user):
+    '''
+    handles a chat from a client then broadcasts to each user
+    '''
     while True:
         try:
             message = conn.recv(2048)
@@ -66,6 +72,11 @@ def handleClientChat(conn,addr,user):
 
 
 def start():
+    '''
+    initial server setup allowing server to listen on port 5050
+    accepts user connection prompts for username and either refuses connection
+    if taken or adds to user dict and starts up the thread to handle chats
+    '''
     server.listen()
     print(f'[LISTENING] server is listening on on {SERVER}')
 
