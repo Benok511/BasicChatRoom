@@ -34,18 +34,22 @@ clients = {}
 #     finally:
 #         conn.close()
 
+clientsLock = threading.Lock()
 
 def broadcast(message,conn):
     '''
     broadcasts a message received from a client to all other connecting clients
     '''
-    for client in clients.copy():
-        if clients[client] != conn:
-            try:
-                clients[client].send(message)
-            except:
-                clients[client].close()
-                del clients[client]
+    # was researching threading and realised that multiple threads may access it at the same time so added a lock to prevent
+    with clientsLock:
+        for user, client_conn in list(clients.items()):
+            if client_conn != conn:
+                try:
+                    client_conn.send(message)
+                except:
+                    client_conn.close()
+                    del clients[user]
+
 
 def handleClientChat(conn,addr,user):
     '''
@@ -83,7 +87,7 @@ def start():
     try:
         while True:
             conn,addr = server.accept()
-            user = conn.recv(2048).decode(FORMAT)
+            user = conn.recv(1024).decode(FORMAT).strip()
             if user in clients:
                 conn.send("USERNAME IS TAKEN".encode(FORMAT))
                 conn.close()

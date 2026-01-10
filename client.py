@@ -21,9 +21,9 @@ ADDR = (SERVER,PORT)
 #     response = client.recv(2048).decode(FORMAT)
 #     print(response)
 
-def receive():
+def receive(client):
     '''
-    recieves other clients messages from the server  
+    receives other clients messages from the server
     '''
     while True:
         try:
@@ -31,21 +31,25 @@ def receive():
             if not message:
                 print('[SERVER DISCONNECTED]')
                 break
-            try:
-                print(message.decode(FORMAT))
-            except UnicodeDecodeError:
-                continue
+            print(message.decode(FORMAT))
         except:
+            print('[RECEIVE ERROR]')
             break
 
 
-def send2():
+def send2(client):
     '''
     sends message to server in encoded format
     '''
     while True:
-        message = input()
-        client.send(message.encode(FORMAT))
+        try:
+            message = input()
+            client.send(message.encode(FORMAT))
+        except (BrokenPipeError, OSError):
+            print('[CANNOT SEND, SERVER DISCONNECTED]')
+            break
+        except:
+            break
 
 while True:
     '''
@@ -55,7 +59,9 @@ while True:
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.connect(ADDR)
 
-    user = input("create a username: ")
+    user = input("create a username: ").strip()
+    if not user:
+        continue
     client.send(user.encode(FORMAT))
     response = client.recv(1024).decode(FORMAT)
 
@@ -68,8 +74,8 @@ while True:
     
     
 
-receive_thread = threading.Thread(target=receive, daemon=True)
-send_thread = threading.Thread(target=send2, daemon=True)
+receive_thread = threading.Thread(target=receive,args=(client,),daemon=True)
+send_thread = threading.Thread(target=send2,daemon=True)
 
 receive_thread.start()
 send_thread.start()
