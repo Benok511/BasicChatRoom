@@ -21,6 +21,11 @@ ADDR = (SERVER,PORT)
 #     response = client.recv(2048).decode(FORMAT)
 #     print(response)
 
+'''
+CLIENT IS A WIP THIS IS WHATS CAUSING ALL THE BUGS WITH DISCONNECTS
+'''
+
+
 def receive(client):
     '''
     receives other clients messages from the server
@@ -74,8 +79,8 @@ while True:
     
     
 
-receive_thread = threading.Thread(target=receive,args=(client,),daemon=True)
-send_thread = threading.Thread(target=send2,daemon=True)
+receive_thread = threading.Thread(target=receive,args=(client,))
+send_thread = threading.Thread(target=send2)
 
 receive_thread.start()
 send_thread.start()
