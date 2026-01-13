@@ -39,13 +39,14 @@ clientsLock = threading.Lock()
 def broadcast(message,conn):
     '''
     broadcasts a message received from a client to all other connecting clients
+    threadLock on the client dict to avoid concurrency issues with threads
     '''
     # was researching threading and realised that multiple threads may access it at the same time so added a lock to prevent
     with clientsLock:
         for user, client_conn in list(clients.items()):
             if client_conn != conn:
                 try:
-                    client_conn.send(message)
+                    client_conn.send(f'{message}\n'.encode(FORMAT))
                 except:
                     client_conn.close()
                     del clients[user]
@@ -57,12 +58,14 @@ def handleClientChat(conn,addr,user):
     '''
     while True:
         try:
+            print(f"[DEBUG] Waiting for message from {user}...")
             message = conn.recv(2048)
+            print(f"[DEBUG] Received from {user}: {message}")
             if not message:
                 break
             message = message.decode(FORMAT)
-            time = datetime.now().strftime("%-d/%-m/%y %H:%M")
-            newmsg = f"{user} {time}: {message}".encode(FORMAT)
+            time = datetime.datetime.now().strftime("%d/%m/%y %H:%M")
+            newmsg = f"{user} {time}: {message}\n".encode(FORMAT)
             broadcast(newmsg,conn)
         except:
             break
@@ -82,22 +85,22 @@ def start():
     if taken or adds to user dict and starts up the thread to handle chats
     '''
     server.listen()
-    print(f'[LISTENING] server is listening on on {SERVER}')
+    print(f'[LISTENING] server is listening on on {SERVER}:{PORT}')
 
     try:
         while True:
             conn,addr = server.accept()
             user = conn.recv(1024).decode(FORMAT).strip()
             if user in clients:
-                conn.send("USERNAME IS TAKEN".encode(FORMAT))
+                conn.send("USERNAME IS TAKEN\n".encode(FORMAT))
                 conn.close()
                 continue
-            conn.send("ACK".encode(FORMAT))
+            conn.send("ACK\n".encode(FORMAT))
             clients[user] = conn
             
             thread = threading.Thread(target=handleClientChat,args=(conn,addr,user),daemon=True)
             thread.start()
-            print(f"[ACTIVE CONNECTIONS] {len(clients)}") # when testing noticed one extra thread which is main program so minus 1
+            print(f"[ACTIVE CONNECTIONS] {len(clients)}")
     except KeyboardInterrupt as e:
         print(e)
         server.close()
