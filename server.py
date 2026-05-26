@@ -46,7 +46,7 @@ def broadcast(message,conn):
         for user, client_conn in list(clients.items()):
             if client_conn != conn:
                 try:
-                    client_conn.send(f'{message}\n'.encode(FORMAT))
+                    client_conn.send(message)
                 except:
                     client_conn.close()
                     del clients[user]
