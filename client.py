@@ -41,7 +41,9 @@ def receive(client):
                 print('[SERVER DISCONNECTED]')
                 stop_event.set()
                 break
-            print(message.decode(FORMAT))
+            
+            print(message.decode(FORMAT).strip())
+
         except:
             print('[RECEIVE ERROR]')
             stop_event.set()
@@ -87,8 +89,8 @@ while True:
     
 
 
-receive_thread = threading.Thread(target=receive,args=(client,))
-send_thread = threading.Thread(target=send2,args=(client,))
+receive_thread = threading.Thread(target=receive,args=(client,),daemon=True)
+send_thread = threading.Thread(target=send2,args=(client,),daemon=True)
 
 receive_thread.start()
 send_thread.start()
