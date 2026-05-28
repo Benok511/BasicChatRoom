@@ -15,6 +15,7 @@ server.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR, 1)
 
 server.bind(ADDR)
 clients = {}
+conns = {}
 
 # def handle_client(conn,addr):
 #     print(f"[NEW CONNECTION] {addr} connected")
@@ -50,6 +51,14 @@ def broadcast(message,conn):
                 except:
                     client_conn.close()
                     del clients[user]
+                    del conn[conn]
+
+def privateMessage(message,conn,user):
+    with clientsLock:
+        userConn = clients[user]
+        message = f"Message from {conns[conn]} " + message
+        userConn.send(message.encode(FORMAT))
+
 
 
 def handleClientChat(conn,addr,user):
@@ -64,16 +73,29 @@ def handleClientChat(conn,addr,user):
             if not message:
                 break
             message = message.decode(FORMAT)
+
+            msg = message.split()
             time = datetime.datetime.now().strftime("%d/%m/%y %H:%M")
-            newmsg = f"{user} {time}: {message}\n".encode(FORMAT)
-            broadcast(newmsg,conn)
+
+            if msg[0] == "/msg":
+                if msg[1] in clients:
+                    newmsg = f"{time}: {" ".join(msg[2:])}"
+                    privateMessage(newmsg,conn,msg[1])
+                else:
+                    conn.send("user does not exist".encode(FORMAT))
+
+            else:
+                newmsg = f"{user} {time}: {message}\n".encode(FORMAT)
+                broadcast(newmsg,conn)
         except:
             break
     
     print(f"[DISCONNECTED] {user}")
-    if user in clients:
-        del clients[user]
-    conn.close()
+    with clientsLock:
+        if user in clients:
+            del clients[user]
+            del conns[conn]
+        conn.close()
 
 
 
@@ -97,10 +119,12 @@ def start():
                 continue
             conn.send("ACK\n".encode(FORMAT))
             clients[user] = conn
+            conns[conn] = user
             
             thread = threading.Thread(target=handleClientChat,args=(conn,addr,user),daemon=True)
             thread.start()
-            print(f"[ACTIVE CONNECTIONS] {len(clients)}")
+            with clientsLock:
+                print(f"[ACTIVE CONNECTIONS] {len(clients)}")
     except KeyboardInterrupt as e:
         print(e)
         server.close()
